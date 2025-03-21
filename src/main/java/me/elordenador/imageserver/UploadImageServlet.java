@@ -19,7 +19,8 @@ public class UploadImageServlet {
     private class Status {
         private int status;
         private String message;
-        public Status(int status, String message) {
+        private int imageID;
+        public Status(int status, String message, int imageID) {
             this.status = status;
         }
     }
@@ -84,13 +85,13 @@ public class UploadImageServlet {
                 }
             }
             response.setStatus(HttpServletResponse.SC_OK);
-            Status status = new Status(0, "File uploaded");
+            Status status = new Status(0, "File uploaded", id);
             Gson gson = new Gson();
             String json = gson.toJson(status);
             out.println(json);
         } catch (Exception e) {
             response.setContentType("application/json");
-            Status status = new Status(1, e.getMessage());
+            Status status = new Status(1, e.getMessage(), 0);
             Gson gson = new Gson();
             String json = gson.toJson(status);
             out.println(json);

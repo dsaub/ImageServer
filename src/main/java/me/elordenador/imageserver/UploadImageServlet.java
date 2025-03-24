@@ -3,7 +3,9 @@ package me.elordenador.imageserver;
 
 import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
@@ -13,15 +15,17 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-
+@MultipartConfig
 @WebServlet(name = "UploadImageServlet", value = "/api/v1/uploadImage")
-public class UploadImageServlet {
+public class UploadImageServlet extends HttpServlet {
     private class Status {
         private int status;
         private String message;
         private int imageID;
         public Status(int status, String message, int imageID) {
             this.status = status;
+            this.imageID = imageID;
+            this.message = message;
         }
     }
     private File UPLOAD_FOLDER = new File("images");
@@ -34,6 +38,17 @@ public class UploadImageServlet {
 
         try {
             Verificator.verifyCSRF(request.getParameter("csrf_token"));
+        } catch (Exception e) {
+            response.setContentType("text/plain");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            PrintWriter out = response.getWriter();
+            out.println(e.getMessage());
+            return;
+
+        }
+
+        try {
+            Verificator.verifyToken(request.getParameter("token"));
         } catch (Exception e) {
             response.setContentType("text/plain");
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -67,7 +82,7 @@ public class UploadImageServlet {
             stmt.setString(3, file_format);
 
             stmt.executeUpdate();
-
+            stmt.close();
             stmt = connection.prepareStatement("SELECT id FROM image ORDER BY id DESC LIMIT 1");
             ResultSet rs = stmt.executeQuery();
 
@@ -77,6 +92,9 @@ public class UploadImageServlet {
             stmt.close();
             connection.close();
             File file = new File(UPLOAD_FOLDER, id+"."+file_format);
+            if (!file.exists()) {
+                file.createNewFile();
+            }
             try (InputStream fileContent = filePart.getInputStream(); FileOutputStream fos = new FileOutputStream(file)) {
                 byte[] buffer = new byte[1024];
                 int bytesRead;
@@ -89,8 +107,10 @@ public class UploadImageServlet {
             Gson gson = new Gson();
             String json = gson.toJson(status);
             out.println(json);
+            connection.close();
         } catch (Exception e) {
             response.setContentType("application/json");
+            e.printStackTrace();
             Status status = new Status(1, e.getMessage(), 0);
             Gson gson = new Gson();
             String json = gson.toJson(status);

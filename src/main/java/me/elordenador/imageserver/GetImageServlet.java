@@ -3,6 +3,7 @@ package me.elordenador.imageserver;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -13,11 +14,17 @@ import java.io.OutputStream;
 import java.sql.*;
 
 @WebServlet(name = "GetImageServlet", value = "/api/v1/getImage")
-public class GetImageServlet {
+public class GetImageServlet extends HttpServlet {
 
     private File UPLOAD_FOLDER = new File("images");
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        int imageID = Integer.parseInt(request.getParameter("imageID"));
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        try {
+            DBCredentials.init();
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        DBCredentials.regenerateJDBC();
+        int imageID = Integer.parseInt(request.getParameter("id"));
         try (Connection conn = DriverManager.getConnection(DBCredentials.getJDBC(), DBCredentials.getDBUser(), DBCredentials.getDBPassword())) {
             PreparedStatement stmt = conn.prepareStatement("SELECT id, formato_imagen FROM image WHERE id = ?");
             stmt.setInt(1, imageID);

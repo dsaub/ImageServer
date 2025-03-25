@@ -48,7 +48,7 @@ public class UploadImageServlet extends HttpServlet {
         }
 
         try {
-            Verificator.verifyToken(request.getParameter("token"));
+            Verificator.verifyToken(request.getParameter("token1"));
         } catch (Exception e) {
             response.setContentType("text/plain");
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -58,15 +58,37 @@ public class UploadImageServlet extends HttpServlet {
 
         }
 
-        if (UPLOAD_FOLDER.exists() && !UPLOAD_FOLDER.isDirectory()) {
-            UPLOAD_FOLDER.delete();
-            UPLOAD_FOLDER = new File(UPLOAD_FOLDER.getAbsolutePath());
-        }
-
         if (!UPLOAD_FOLDER.exists()) {
+                System.out.println("> Creating folder" + UPLOAD_FOLDER.getAbsolutePath());
             UPLOAD_FOLDER.mkdir();
+        } else {
+            System.out.println("> Folder exists" + UPLOAD_FOLDER.getAbsolutePath());
         }
 
+
+        try {
+            File file = new File(UPLOAD_FOLDER.getAbsolutePath() + "/" + "test.file");
+            if (file.exists()) {
+                file.delete();
+            }
+
+            boolean success = file.createNewFile();
+            if (!success) {
+                Status status = new Status(2, "Cannot write " + UPLOAD_FOLDER.getAbsolutePath() + " " + System.getProperty("user.name"), 0);
+                response.setContentType("application/json");
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                PrintWriter out = response.getWriter();
+                out.println(new Gson().toJson(status));
+                return;
+            }
+        } catch (IOException e) {
+            Status status = new Status(2, "Cannot write " + UPLOAD_FOLDER.getAbsolutePath() + " " + System.getProperty("user.name") + e.getMessage(), 0);
+            response.setContentType("application/json");
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            PrintWriter out = response.getWriter();
+            out.println(new Gson().toJson(status));
+            return;
+        }
         response.setContentType("application/json");
         PrintWriter out = response.getWriter();
 

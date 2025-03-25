@@ -1,8 +1,9 @@
-#title {
-    justify-content: center;
-    align-content: center;
-    display: flex;
-    font-size: 40px;
-    border: 1px solid black;
-    padding: 10px 10px 10px 10px;
+header {
+    padding: 20px 20px 20px 20px;
+    border: none;
+}
+
+section {
+    margin-top: 50px;
+
 }
